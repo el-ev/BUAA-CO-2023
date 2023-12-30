@@ -1,6 +1,7 @@
 module E_Reg (
     input wire stall,
     input wire req,
+    
     input wire D_ALUOv,
     input wire D_DM_Ov,
     input wire [4:0] D_ExcCode,

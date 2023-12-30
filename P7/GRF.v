@@ -12,11 +12,13 @@ module GRF(
     /*
         General Register File
         32 * 32bit registers
+        GPR[0] is always 0
     */
     reg [31:0] registers [31:0];
     
     integer i;
 
+    // Internal forwarding
     assign RS = (RS_Addr == WA && WA && WE) ? WD : registers[RS_Addr];
     assign RT = (RT_Addr == WA && WA && WE) ? WD : registers[RT_Addr];
 

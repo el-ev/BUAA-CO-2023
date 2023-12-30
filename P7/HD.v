@@ -37,10 +37,10 @@ module HD (
     assign stall_rs = stall_rs_e || stall_rs_m;
     assign stall_rt = stall_rt_e || stall_rt_m;
 
-    assign stall_HILO = E_MulDiv_busy && D_MulDivOp;
+    assign stall_hilo = E_MulDiv_busy && D_MulDivOp;
 
-    assign stall_eret = D_eret && (E_CP0_WE && (E_RD_Addr == 14)) ||
-                        D_eret && (M_CP0_WE && (M_RD_Addr == 14));
+    assign stall_eret = D_eret && (E_CP0_WE && (E_RD_Addr == 14) ||
+                                   M_CP0_WE && (M_RD_Addr == 14) );
 
-    assign stall = stall_rs || stall_rt || stall_HILO || stall_eret;
+    assign stall = stall_rs || stall_rt || stall_hilo || stall_eret;
 endmodule

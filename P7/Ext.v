@@ -10,7 +10,7 @@ module Ext (
         Supported operations:
             00: Zero-extend
             01: Sign-extend
-            10: High-extend
+            10: High-extend (for LUI)
             11: Reserved
     */
     always @(*) begin

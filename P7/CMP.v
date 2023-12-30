@@ -19,6 +19,7 @@ module CMP (
         case (CMPOp)
             `CMP_EQ   :  Zero = A == B;
             `CMP_NE   :  Zero = A != B;
+            // The following are just never used but remain for extensibility
             `CMP_LT   :  Zero = $signed(A) <  $signed(B);
             `CMP_LE   :  Zero = $signed(A) <= $signed(B);
             `CMP_GT   :  Zero = $signed(A) >  $signed(B);

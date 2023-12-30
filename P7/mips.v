@@ -35,6 +35,10 @@ module mips(
 
     wire [31:0] PrAddr, PrWD, PrRD;
     wire [3:0] PrByteen;
+    wire IRQ0, IRQ1;
+    wire [5:0] HWInt = {3'b0. interrupt, IRQ1, IRQ0};
+
+    // Something like a single-cycle CPU
     CPU cpu(
         .clk(clk),
         .reset(reset),
@@ -42,6 +46,8 @@ module mips(
 
         .i_inst_addr(i_inst_addr),
         .i_inst_rdata(i_inst_rdata),
+
+        .HWInt(HWInt),
 
         .PrAddr(PrAddr),
         .PrWD(PrWD),
@@ -55,11 +61,9 @@ module mips(
         .w_grf_wdata(w_grf_wdata),
         .w_inst_addr(w_inst_addr),
 
-        .int_peri(interrupt),
-        .int_t0(IRQ0),
-        .int_t1(IRQ1)
     );
 
+    /*----------- Bridge -------------*/
     wire mem = (PrAddr >= `Begin_DM) & (PrAddr <= `End_DM),
          tc0 = (PrAddr >= `Begin_TC0) & (PrAddr <= `End_TC0),
          tc1 = (PrAddr >= `Begin_TC1) & (PrAddr <= `End_TC1),
@@ -79,8 +83,9 @@ module mips(
 
     wire TC0_WE = tc0 && (PrByteen != 0);
     wire TC1_WE = tc1 && (PrByteen != 0);
-    wire IRQ0, IRQ1;
     wire [31:0] TC0_Out, TC1_Out;
+    
+    /*----------- Timers -------------*/
     TC _tc0(
         .clk(clk),
         .reset(reset),

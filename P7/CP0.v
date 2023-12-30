@@ -40,6 +40,7 @@ module CP0(
                      0;
 
     wire IntReq, ExcReq;
+
     assign IntReq = `IE & !`EXL & |(`IM & HWInt);
     assign ExcReq = !`EXL & | ExcCodeIn;
     assign req = IntReq | ExcReq; 
@@ -58,7 +59,7 @@ module CP0(
             if (req) begin
                 `ExcCode <= IntReq? 5'b0: ExcCodeIn;
                 `EXL <= 1'b1;
-                EPC <= BDIn? VPC-4 : VPC ;
+                EPC <= BDIn? VPC - 4 : VPC ;
                 `BD <= BDIn;
             end else if (WE) begin
                 case (InAddr)

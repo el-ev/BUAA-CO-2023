@@ -4,9 +4,7 @@ module CPU(
     input wire clk,
     input wire reset,
     input wire [31:0] i_inst_rdata,
-    input wire int_peri,
-    input wire int_t0,
-    input wire int_t1,
+    input wire [5:0] HWInt,
     output wire [31:0] i_inst_addr,
     output wire [31:0] PrAddr,
     output wire [31:0] PrWD,
@@ -26,29 +24,25 @@ module CPU(
     wire E_WE = `Enabled;
     wire M_WE = `Enabled;
     wire W_WE = `Enabled;
-
-    wire [31:0] E_Reg_WD;
-    wire [31:0] M_Reg_WD;
-    wire [31:0] W_Reg_WD;
     
-    assign E_Reg_WD =
+    wire [31:0] E_Reg_WD =
         //(E_Reg_WD_sel == `Reg_WD_ALU) ? E_ALURes :
         //(E_Reg_WD_sel == `Reg_WD_HILO)? E_MulDiv_Out :
         //(E_Reg_WD_sel == `Reg_WD_DM) ? E_DM_WD :
         (E_Reg_WD_sel == `Reg_WD_PC_8) ? E_PC + 8 : `Unused;
-    assign M_Reg_WD =
+    wire [31:0] M_Reg_WD =
         (M_Reg_WD_sel == `Reg_WD_ALU) ? M_ALURes :
         (M_Reg_WD_sel == `Reg_WD_HILO)? M_MulDiv_Out :
         //(M_Reg_WD_sel == `Reg_WD_DM) ? M_DM_WD :
         (M_Reg_WD_sel == `Reg_WD_PC_8) ? M_PC + 8 : `Unused;
-    assign W_Reg_WD =
+    wire [31:0] W_Reg_WD =
         (W_Reg_WD_sel == `Reg_WD_ALU) ? W_ALURes :
         (W_Reg_WD_sel == `Reg_WD_HILO)? W_MulDiv_Out :
         (W_Reg_WD_sel == `Reg_WD_DM) ? W_DM_RD :
         (W_Reg_WD_sel == `Reg_WD_PC_8) ? W_PC + 8 :
         (W_Reg_WD_sel == `Reg_WD_CP0) ? W_CP0Out : `Unused;
 
-
+    /* (Nearly) All about exceptions are defined here */
     wire [4:0] F_ExcCode, D_ExcCode, E_ExcCode, M_ExcCode, D_ExcCode_old, E_ExcCode_old, M_ExcCode_old; 
     wire F_Exc_AdEL, D_Exc_RI, D_Exc_Syscall, E_Exc_Ov, E_Exc_Ov_DM, M_Exc_Ov_DM, M_Exc_AdEL, M_Exc_AdES;
     wire F_bd, D_bd, E_bd, M_bd;
@@ -116,14 +110,16 @@ module CPU(
     assign F_Inst = F_Exc_AdEL ? 32'h00000000 :
                     i_inst_rdata;
 
-    //wire [255:0] F_ASM;
-	//_DASM Dasm(
-    //    .pc(F_PC),
-    //    .instr(F_Inst),
-    //    .imm_as_dec(1'b1),
-    //    .reg_name(1'b0),
-    //    .asm(F_ASM)
-    //);
+    // Get it from https://github.com/roife/dasm
+    // wire [255:0] F_ASM;
+	// _DASM Dasm(
+    //     .pc(F_PC),
+    //     .instr(F_Inst),
+    //     .imm_as_dec(1'b1),
+    //     .reg_name(1'b0),
+    //     .asm(F_ASM)
+    // );
+
     wire [31:0] D_PC;
     wire [31:0] D_Inst;
 
@@ -146,11 +142,11 @@ module CPU(
 
     // From instruction
     wire [4:0] D_RS_Addr   = D_Inst[25:21];
-    wire [4:0] D_RT_Addr = D_Inst[20:16];
-    wire [4:0] D_RD_Addr = D_Inst[15:11];
+    wire [4:0] D_RT_Addr   = D_Inst[20:16];
+    wire [4:0] D_RD_Addr   = D_Inst[15:11];
     wire [15:0] D_Imm16    = D_Inst[15:0];
     wire [25:0] D_Imm26    = D_Inst[25:0];
-    wire [4:0] D_Shamt   = D_Inst[10:6];
+    wire [4:0] D_Shamt     = D_Inst[10:6];
 
     
     // From Controller
@@ -494,17 +490,17 @@ module CPU(
         .WE(M_DM_WE),
         .Align(M_DM_Align),
         .WD(FWD_M_RT),
-        .m_data_rdata(PrRD),
-        .m_data_addr(PrAddr),
-        .m_data_wdata(PrWD),
-        .m_data_byteen(PrByteen),
+        .PrRD(PrRD),
+        .PrAddr(PrAddr),
+        .PrWD(PrWD),
+        .PrByteen(PrByteen),
         .m_inst_addr(m_inst_addr),
         .RD(M_DM_RD)
     );
 
 
     wire [31:0] M_CP0Out; // Pass to W
-    wire [5:0] HWInt = {3'b0, int_peri, int_t1, int_t0};
+    
     CP0 cp0(
         .clk(clk),
         .rst(reset),
@@ -524,7 +520,6 @@ module CPU(
 
 
     wire [31:0] W_PC;
-
     wire [31:0] W_ALURes;
     wire [31:0] W_MulDiv_Out;
     wire [31:0] W_DM_RD;
@@ -559,7 +554,7 @@ module CPU(
         .W_CP0Out(W_CP0Out)
     );
 
-    // For judger
+    // For judger, and only for judger
     assign w_grf_we = W_Reg_WE;
     assign w_grf_addr = W_Reg_WA;
     assign w_grf_wdata = W_Reg_WD;

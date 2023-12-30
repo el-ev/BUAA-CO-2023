@@ -8,7 +8,7 @@ module ALU (
 
     input wire [31:0] A,
     input wire [31:0] B,
-    input wire [4:0] ALUOp,
+    input wire [4:0] ALUOp, // allows for 32 operations
     output reg [31:0] ALURes
 );
     /*

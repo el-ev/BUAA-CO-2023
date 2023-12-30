@@ -9,6 +9,8 @@
 `define Begin_Pr  32'h00007f20
 `define End_Pr    32'h00007f23
 
+// Legacy from P5, it's compeletely a combinational module
+// Note that this module is also a part of the Bridge
 module DM(
     input wire req,
     input wire RE,
@@ -22,14 +24,14 @@ module DM(
     input wire [2:0] Align,
 
     input wire [31:0] WD,
-    input wire [31:0] m_data_rdata,
-    output wire [31:0] m_data_addr,
-    output reg [31:0] m_data_wdata,
-    output reg [3:0] m_data_byteen,
+    input wire [31:0] PrRD,
+    output wire [31:0] PrAddr,
+    output reg [31:0] PrWD,
+    output reg [3:0] PrByteen,
     output wire [31:0] m_inst_addr,
     output reg [31:0] RD
 );
-    assign m_data_addr = Addr;
+    assign PrAddr = Addr;
     assign m_inst_addr = PC;
 
     wire _word, _half, _byte;
@@ -57,64 +59,64 @@ module DM(
         (`Begin_Pr <= Addr) & (Addr <= `End_Pr)
     );
     wire TimerAlignError = (Addr >= `Begin_TC0) && (Align != `DM_align_word);
-    wire TimerSaveError  = (Addr == 32'h00007f08) || (Addr == 32'h00007f18);
+    wire TimerSaveError  = (Addr == 32'h00007f08) || (Addr == 32'h00007f18); // TCO counter is read-only
    // READ 
     assign Exc_AdEL = (RE) & (AlignError || RangeError || TimerAlignError || Exc_Ov_DM);
     assign Exc_AdES = (WE) & (AlignError || RangeError || TimerAlignError || TimerSaveError || Exc_Ov_DM);
     
     always @(*) begin
         if (_word) begin
-            RD = m_data_rdata;
+            RD = PrRD;
         end else if (_half) begin
             if (_h0) begin
-                RD = {{16{m_data_rdata[15]}},m_data_rdata[15:0]};
+                RD = {{16{PrRD[15]}},PrRD[15:0]};
             end else if (_h1) begin
-                RD = {{16{m_data_rdata[31]}},m_data_rdata[31:16]};
+                RD = {{16{PrRD[31]}},PrRD[31:16]};
             end
         end else if (_byte) begin
             if (_b0) begin
-                RD = {{24{m_data_rdata[7]}},m_data_rdata[7:0]};
+                RD = {{24{PrRD[7]}},PrRD[7:0]};
             end else if (_b1) begin
-                RD = {{24{m_data_rdata[15]}},m_data_rdata[15:8]};
+                RD = {{24{PrRD[15]}},PrRD[15:8]};
             end else if (_b2) begin
-                RD = {{24{m_data_rdata[23]}},m_data_rdata[23:16]};
+                RD = {{24{PrRD[23]}},PrRD[23:16]};
             end else if (_b3) begin
-                RD = {{24{m_data_rdata[31]}},m_data_rdata[31:24]};
+                RD = {{24{PrRD[31]}},PrRD[31:24]};
             end
         end
     end
 
     always @(*) begin
         if (!WE || req) begin
-            m_data_byteen = 4'b0000;
+            PrByteen = 4'b0000;
         end else begin
             if (_word) begin
-                m_data_byteen = 4'b1111;
-                m_data_wdata = WD;
+                PrByteen = 4'b1111;
+                PrWD = WD;
             end else if (_half) begin
                 if (_h0) begin
-                    m_data_byteen = 4'b0011;
-                    m_data_wdata[15:0] = WD[15:0];
+                    PrByteen = 4'b0011;
+                    PrWD[15:0] = WD[15:0];
                 end else if (_h1) begin
-                    m_data_byteen = 4'b1100;
-                    m_data_wdata[31:16] = WD[15:0];
+                    PrByteen = 4'b1100;
+                    PrWD[31:16] = WD[15:0];
                 end 
             end else if (_byte) begin
                 if (_b0) begin
-                    m_data_byteen = 4'b0001;
-                    m_data_wdata[7:0] = WD[7:0];
+                    PrByteen = 4'b0001;
+                    PrWD[7:0] = WD[7:0];
                 end else if (_b1) begin
-                    m_data_byteen = 4'b0010;
-                    m_data_wdata[15:8] = WD[7:0];
+                    PrByteen = 4'b0010;
+                    PrWD[15:8] = WD[7:0];
                 end else if (_b2) begin
-                    m_data_byteen = 4'b0100;
-                    m_data_wdata[23:16] = WD[7:0];
+                    PrByteen = 4'b0100;
+                    PrWD[23:16] = WD[7:0];
                 end else if (_b3) begin
-                    m_data_byteen = 4'b1000;
-                    m_data_wdata[31:24] = WD[7:0];
+                    PrByteen = 4'b1000;
+                    PrWD[31:24] = WD[7:0];
                 end
             end else begin
-                m_data_byteen = 4'b0000;
+                PrByteen = 4'b0000;
             end
         end
     end

@@ -45,9 +45,9 @@ module Controller(
     reg [5:0] Instr;
     always @(*) begin
         // AND Logic
-        if (Instruction[31:21] == `MFC0) Instr = `I_MFC0;
-        else if (Instruction[31:21] == `MTC0) Instr = `I_MTC0;
-        else if (Instruction == `ERET) Instr = `I_ERET;
+        if (Instruction[31:21] == `MFC0) Instr = `I_MFC0;       // So UGLY
+        else if (Instruction[31:21] == `MTC0) Instr = `I_MTC0;  // So UGLY
+        else if (Instruction == `ERET) Instr = `I_ERET;         // So UGLY
         else if (OP == `OP_ZERO) begin
             case (FUNC)
                 `FUNC_ADD   : Instr = `I_ADD    ;
@@ -67,7 +67,7 @@ module Controller(
                 `FUNC_MTHI  : Instr = `I_MTHI   ;
                 `FUNC_MTLO  : Instr = `I_MTLO   ;
                 `FUNC_NOP   : Instr = `I_NOP    ;
-                `FUNC_SYSCALL : Instr = `I_SYSCALL;
+                `FUNC_SYSCALL : Instr = `I_SYSCALL; // So UGLY
                 default     : Instr = `I_ERROR  ;
             endcase
         end
@@ -92,6 +92,7 @@ module Controller(
         end
     end
 
+    // If I had more than two days to finish P7, these statements would be placed in cuter spots.
     assign Exc_RI = (Instr == `I_ERROR);
     assign Exc_Syscall = (Instr == `I_SYSCALL);
     assign ALUOv = (Instr == `I_ADD) | (Instr == `I_ADDI) | (Instr == `I_SUB);
@@ -100,6 +101,7 @@ module Controller(
     assign eret   = (Instr == `I_ERET);
 
     always @(*) begin
+        // Quite lengthy, it's better to categorize them first
         case (Instr)
             `I_MFC0     : begin
                 ALU_B_sel       =   `Unused             ;

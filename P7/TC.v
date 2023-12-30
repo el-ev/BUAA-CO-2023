@@ -7,8 +7,7 @@
 `define ctrl   mem[0]
 `define preset mem[1]
 `define count  mem[2]
-
-
+// I didn't wrote this, the course group did.
 module TC(
     input wire clk,
     input wire reset,
